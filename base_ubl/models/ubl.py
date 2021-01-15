@@ -38,6 +38,8 @@ class BaseUbl(models.AbstractModel):
     def _ubl_add_address(
             self, partner, node_name, parent_node, ns, version='2.1'):
         address = etree.SubElement(parent_node, ns['cac'] + node_name)
+        addressname = etree.SubElement(address, ns['cbc'] + 'AddressName')
+        addressname.text = partner.name
         if partner.street:
             streetname = etree.SubElement(
                 address, ns['cbc'] + 'StreetName')
@@ -598,6 +600,8 @@ class BaseUbl(models.AbstractModel):
 
     @api.model
     def ubl_parse_address(self, address_node, ns):
+        name_xpath = address_node.xpath('cbc:AddressName', namespaces=ns)
+        name = name_xpath and name_xpath[0].text or False
         country_code_xpath = address_node.xpath(
             'cac:Country/cbc:IdentificationCode',
             namespaces=ns)
@@ -610,6 +614,7 @@ class BaseUbl(models.AbstractModel):
         zip = zip_xpath and zip_xpath[0].text and\
             zip_xpath[0].text.replace(' ', '') or False
         address_dict = {
+            'name': name,
             'zip': zip,
             'state_code': state_code,
             'country_code': country_code,
